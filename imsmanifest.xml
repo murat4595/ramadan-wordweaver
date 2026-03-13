@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- 
+  identifier: Paket için benzersiz bir kimlik. 
+  Boşluk ve Türkçe karakter kullanmayınız.
+-->
+<manifest identifier="Word_Weaver_School_Life_T1_SIM_01" version="1"
+          xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+          xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd
+                              http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd
+                              http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <adlcp:location>metadata.xml</adlcp:location>
+  </metadata>
+  <!-- 
+    organizations default: Başlangıç organizasyonunu belirtir. 
+    Boşluk ve Türkçe karakter kullanmayınız.
+  -->
+  <organizations default="Word_Weaver_School_Life_T1_ORG">
+    <!-- 
+      organization identifier: Organizasyon için benzersiz bir kimlik. 
+      Boşluk ve Türkçe karakter kullanmayınız.
+    -->
+    <organization identifier="Word_Weaver_School_Life_T1">
+      <!-- title: LMS arayüzünde görünecek olan eğitim başlığı. -->
+      <title>Word Weaver: School Life and Education</title>
+      <item identifier="ITEM_01" identifierref="RESOURCE_01">
+        <title>Word Weaver: School Life and Education</title>
+        <adlcp:masteryscore>80</adlcp:masteryscore>
+        <metadata>
+          <schema>ADL SCORM</schema>
+          <schemaversion>1.2</schemaversion>
+          <adlcp:location>metadata.xml</adlcp:location>
+        </metadata>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <!-- 
+      resource: Kaynak tanımı. href="index.html" LMS'in açacağı başlangıç dosyasıdır.
+    -->
+    <resource identifier="RESOURCE_01" type="webcontent" href="index.html" adlcp:scormtype="sco">
+      <metadata>
+        <schema>ADL SCORM</schema>
+        <schemaversion>1.2</schemaversion>
+        <adlcp:location>metadata.xml</adlcp:location>
+      </metadata>
+      <!-- file: SCORM paketine dahil edilecek tüm dosyaları burada listeleyin. -->
+      <file href="index.html"/>
+      <file href="metadata.xml"/>
+      <file href="SCORM_API_wrapper.js"/>
+      <file href="images/backgroun1.png"/>
+      <file href="sounds/background.mp3"/>
+    </resource>
+  </resources>
+</manifest>

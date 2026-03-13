@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
+  <general>
+    <!-- identifier: Benzersiz kimlik. Boşluk ve Türkçe karakter kullanmayınız. -->
+    <identifier>Word_Weaver_School_Life_T1_SIM_METADATA_01</identifier>
+    <title>
+      <!-- langstring: LMS'te görünecek başlık. -->
+      <langstring xml:lang="tr">Word Weaver: School Life and Education</langstring>
+    </title>
+    <language>tr</language>
+    <description>
+      <!-- langstring: Etkinliğin açıklaması. -->
+      <langstring xml:lang="tr">Word Weaver: School Life and Education, okul hayatı ve eğitim temalı kelime dağarcığını geliştirmeyi amaçlayan, etkileşimli bir öğrenme deneyimi sunan SCORM uyumlu bir kelime bulmaca oyunudur.</langstring>
+    </description>
+    <keyword>
+      <!-- langstring: Etkinliğinizle ilgili anahtar kelimeler. -->
+      <langstring xml:lang="tr">Kelime Oyunu</langstring>
+      <langstring xml:lang="tr">Ingilizce</langstring>
+      <langstring xml:lang="tr">Egitim</langstring>
+      <langstring xml:lang="tr">Okul Hayati</langstring>
+      <langstring xml:lang="tr">Word Weaver</langstring>
+    </keyword>
+  </general>
+  <lifecycle>
+    <version>
+      <langstring xml:lang="tr">1.0</langstring>
+    </version>
+    <status>
+      <source>LOMv1.0</source>
+      <value>Final</value>
+    </status>
+  </lifecycle>
+  <metametadata>
+    <!-- identifier: Benzersiz kimlik. Boşluk ve Türkçe karakter kullanmayınız. -->
+    <identifier>Word_Weaver_School_Life_T1_SIM_METADATA_01</identifier>
+    <metadataschema>LOMv1.0</metadataschema>
+    <metadataschema>SCORM_CAM_1.2</metadataschema>
+  </metametadata>
+  <technical>
+    <format>text/html</format>
+    <location>index.html</location>
+  </technical>
+  <educational>
+    <interactivitytype>
+      <source>LOMv1.0</source>
+      <value>Active</value>
+    </interactivitytype>
+    <learningresourcetype>
+      <source>LOMv1.0</source>
+      <value>Simulation</value>
+    </learningresourcetype>
+    <interactivitylevel>
+      <source>LOMv1.0</source>
+      <value>High</value>
+    </interactivitylevel>
+    <intendedenduserrole>
+      <source>LOMv1.0</source>
+      <value>Learner</value>
+    </intendedenduserrole>
+  </educational>
+  <rights>
+    <cost>
+      <source>LOMv1.0</source>
+      <value>No</value>
+    </cost>
+    <copyrightandotherrestrictions>
+      <source>LOMv1.0</source>
+      <value>Yes</value>
+    </copyrightandotherrestrictions>
+    <description>
+      <langstring xml:lang="tr">Tum haklari saklidir. Izinsiz kullanilamaz.</langstring>
+    </description>
+  </rights>
+</lom>

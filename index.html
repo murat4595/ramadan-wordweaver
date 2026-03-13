@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com data: blob: media:; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:;">
+    <title>Word Weaver: Ramadan Eid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Fallback gradient if image doesn't load */
+            background: linear-gradient(to bottom right, #1a1a2e, #16213e, #0f3460);
+            background-image: url('images/background.png'), linear-gradient(to bottom right, #1a1a2e, #16213e, #0f3460);
+            background-size: 100% 100%;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-blend-mode: normal;
+        }
+
+        /* Animations */
+        @keyframes scale-in {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-scale-in {
+            animation: scale-in 0.3s ease-out;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(-3%);
+            }
+
+            50% {
+                transform: translateY(0);
+            }
+        }
+
+        .animate-bounce {
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        .animate-shake {
+            animation: shake 0.82s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        /* Custom scrollbar for clues if needed */
+        .clue-box {
+            backdrop-filter: blur(8px);
+        }
+
+        /* Bright theme overrides */
+        body.bright-theme {
+            background-color: #fde68a !important;
+            background-image: url('images/ramadan.png'), linear-gradient(to bottom right, #fef3c7, #fde68a, #fbbf24) !important;
+            background-size: 100% 100% !important;
+            background-position: center !important;
+            background-attachment: fixed !important;
+            background-repeat: no-repeat !important;
+            background-blend-mode: normal !important;
+            /* Allow the full color of the bright image to show */
+        }
+
+        body.bright-theme .dark-overlay {
+            background: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        body.bright-theme h1 {
+            color: #78350f !important;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+        }
+
+        body.bright-theme #stats,
+        body.bright-theme #lives-container {
+            background: rgba(120, 53, 15, 0.15) !important;
+            color: #78350f !important;
+        }
+
+        body.bright-theme #puzzle-counter {
+            color: #92400e !important;
+        }
+
+        body.bright-theme .clue-box {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-left-color: #d97706 !important;
+        }
+    </style>
+</head>
+
+<body class="bright-theme min-h-screen bg-cover bg-center relative flex flex-col overflow-hidden">
+
+    <!-- Audio Elements -->
+    <audio id="bgMusic" src="sounds/background.mp3" loop preload="auto"></audio>
+    <audio id="correctSound" src="audio/correct.mp3" preload="auto"></audio>
+    <audio id="wrongSound" src="audio/wrong.mp3" preload="auto"></audio>
+    <audio id="clickSound" src="audio/click.mp3" preload="auto"></audio>
+    <audio id="winSound" src="audio/win.mp3" preload="auto"></audio>
+    <audio id="gameOverSound" src="audio/lose.mp3" preload="auto"></audio>
+
+    <!-- Overlay for better text readability -->
+    <div class="absolute inset-0 bg-black/30 pointer-events-none dark-overlay"></div>
+
+    <div id="game-screen" class="relative z-10 flex flex-col flex-grow p-2 sm:p-4 h-screen">
+        <header class="text-center mb-2 sm:mb-4">
+            <h1 class="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg tracking-wide">Word
+                Weaver: Ramadan Eid 🌙</h1>
+            <div class="flex justify-center items-center gap-4 sm:gap-6">
+                <div id="stats"
+                    class="text-lg md:text-xl text-white/95 font-semibold drop-shadow-md bg-black/20 px-3 py-1 rounded-full">
+                    Score: 0</div>
+                <div id="lives-container"
+                    class="flex gap-2 items-center text-lg md:text-xl text-white/95 drop-shadow-md bg-black/20 px-3 py-1 rounded-full">
+                    <span>Lives:</span>
+                    <div id="hearts" class="flex gap-1"></div>
+                </div>
+            </div>
+            <p id="puzzle-counter" class="text-xs sm:text-sm text-white/80 mt-2 font-mono">Puzzle: 1/12</p>
+        </header>
+
+        <!-- Clue Section -->
+        <div class="max-w-md mx-auto mb-4 bg-white/95 border-l-4 border-amber-500 rounded-lg shadow-xl clue-box w-full">
+            <div class="p-4 text-center">
+                <h2 class="text-xs uppercase tracking-widest font-bold text-slate-500 mb-1">Current Clue</h2>
+                <p id="clue-text" class="text-lg sm:text-xl font-bold text-slate-800 leading-snug"></p>
+            </div>
+        </div>
+
+        <!-- Flying Letters Area -->
+        <div id="letters-container"
+            class="relative flex-grow mb-4 w-full max-w-4xl mx-auto border-2 border-amber-500/50 rounded-xl bg-white/80 backdrop-blur-md shadow-xl overflow-hidden p-2">
+        </div>
+
+        <!-- Answer Boxes -->
+        <div
+            class="w-full max-w-5xl mx-auto mb-6 px-4 py-4 bg-white/80 backdrop-blur-md border-2 border-amber-500/50 rounded-xl shadow-xl">
+            <div id="answer-boxes-container"
+                class="flex justify-center items-center gap-1 sm:gap-2 flex-wrap min-h-[3.5rem]"></div>
+        </div>
+
+        <!-- Controls -->
+        <footer
+            class="flex justify-center items-center gap-2 p-3 bg-white/80 backdrop-blur-md border-2 border-amber-500/50 rounded-xl shadow-xl mx-auto w-full max-w-fit mb-4 flex-wrap">
+            <button id="shuffle-btn"
+                class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-6 rounded-full inline-flex items-center shadow-lg transition-all hover:scale-105 active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                    <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
+                    <path d="m18 2 4 4-4 4" />
+                    <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2l4.3 8.2c.7 1.3 2.1 2.2 3.6 2.2H22" />
+                    <path d="m18 22-4-4 4-4" />
+                </svg>
+                Shuffle
+            </button>
+            <button id="reset-btn"
+                class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-full inline-flex items-center shadow-lg transition-all hover:scale-105 active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                    <path d="M3 2v6h6" />
+                    <path d="M21 12A9 9 0 0 0 6 5.3L3 8" />
+                    <path d="M21 22v-6h-6" />
+                    <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7" />
+                </svg>
+                Skip
+            </button>
+
+            <button id="music-btn"
+                class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-full inline-flex items-center shadow-lg transition-all hover:scale-105 active:scale-95 opacity-80">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                </svg>
+                Music
+            </button>
+
+            <button id="theme-btn"
+                class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-full inline-flex items-center shadow-lg transition-all hover:scale-105 active:scale-95">
+                <span id="theme-icon" class="mr-2 text-lg">🌙</span>
+                <span id="theme-label">Dark</span>
+            </button>
+        </footer>
+    </div>
+
+    <!-- Win Screen -->
+    <div id="win-screen"
+        class="hidden absolute inset-0 z-50 flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            class="max-w-md w-full bg-gradient-to-br from-emerald-400 to-cyan-500 border-4 border-white rounded-2xl shadow-2xl p-8 text-center animate-scale-in">
+            <div class="bg-white rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-yellow-500 fill-yellow-200">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                    <path d="M4 22h16" />
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                </svg>
+            </div>
+            <h1 class="text-4xl font-extrabold text-white mb-2 drop-shadow-md">You Won!</h1>
+            <p class="text-emerald-100 mb-4">You've mastered the Ramadan Eid vocabulary!</p>
+            <div class="text-6xl font-black text-white mb-8 drop-shadow-lg" id="final-score-win">0</div>
+            <button id="play-again-btn-win"
+                class="bg-white text-emerald-600 hover:bg-emerald-50 font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105">Play
+                Again</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen"
+        class="hidden absolute inset-0 z-50 flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div
+            class="max-w-md w-full bg-gradient-to-br from-red-500 to-pink-600 border-4 border-white rounded-2xl shadow-2xl p-8 text-center animate-scale-in">
+            <div class="bg-white rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-red-500">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+            </div>
+            <h1 class="text-4xl font-extrabold text-white mb-2">Game Over</h1>
+            <p class="text-red-100 mb-4">Don't give up! Keep practicing.</p>
+            <div class="text-6xl font-black text-white mb-8 drop-shadow-lg" id="final-score-lose">0</div>
+            <button id="play-again-btn-lose"
+                class="bg-white text-red-600 hover:bg-red-50 font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105">Try
+                Again</button>
+        </div>
+    </div>
+
+    <script src="SCORM_API_wrapper.js"></script>
+    <script>
+        // --- SCORM Entegrasyon Betikleri (MEBI Standartlarına Uygun) ---
+        pipwerks.SCORM.version = "1.2"; // Kullanılacak SCORM versiyonunu belirtir.
+        let scormInitialized = false;
+
+        // SCORM iletişimini başlatan fonksiyon.
+        function initializeSCORM() {
+            if (scormInitialized) {
+                console.log("SCORM zaten başlatıldı.");
+                return true;
+            }
+            try {
+                var initSuccess = pipwerks.SCORM.init();
+                console.log("SCORM başlatma başarılı: ", initSuccess);
+                if (initSuccess) {
+                    scormInitialized = true;
+                    // Sayfa açıldığında ders durumunu hemen "completed" olarak ayarla
+                    pipwerks.SCORM.set("cmi.core.lesson_status", "completed");
+                    pipwerks.SCORM.save();
+                    console.log("SCORM başarıyla başlatıldı ve tamamlandı olarak işaretlendi.");
+                } else {
+                    console.error("SCORM başlatılamadı.");
+                }
+                return initSuccess;
+            } catch (error) {
+                console.error("SCORM başlatma hatası: ", error);
+                return false;
+            }
+        }
+
+        function formatScormTime(milliseconds) {
+            if (typeof milliseconds !== 'number' || milliseconds < 0) return "0000:00:00.00";
+            let totalSeconds = Math.floor(milliseconds / 1000);
+            let hours = Math.floor(totalSeconds / 3600);
+            totalSeconds %= 3600;
+            let minutes = Math.floor(totalSeconds / 60);
+            let seconds = totalSeconds % 60;
+            let hundredths = Math.floor((milliseconds % 1000) / 10);
+            return (String(hours).padStart(4, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0') + '.' + String(hundredths).padStart(2, '0'));
+        }
+
+        // Eğitimin tamamlandığı sinyalini LMS'e gönderen fonksiyon.
+        function completeSignalToLMS() {
+            if (!scormInitialized) {
+                initializeSCORM(); // Başlatılmadıysa önce başlat.
+            }
+            if (scormInitialized) {
+                try {
+                    // Ders durumunu "completed" (tamamlandı) olarak ayarla.
+                    var setStatusSuccess = pipwerks.SCORM.set("cmi.core.lesson_status", "completed");
+                    if (setStatusSuccess) {
+                        console.log("SCORM ders durumu 'completed' olarak ayarlandı.");
+                        var saveSuccess = pipwerks.SCORM.save();
+                        if (saveSuccess) {
+                            console.log("SCORM verileri başarıyla kaydedildi.");
+                        } else {
+                            console.error("SCORM verileri kaydedilemedi.");
+                        }
+                    } else {
+                        console.error("SCORM ders durumu ayarlanamadı.");
+                    }
+                } catch (error) {
+                    console.error("SCORM tamamlama hatası: ", error);
+                }
+            } else {
+                console.error("SCORM başlatılmadığı için tamamlama durumu ayarlanamıyor.");
+            }
+        }
+
+        function sendFinalScormUpdate(status) {
+            if (!scormInitialized) return;
+            const endTime = new Date();
+            const duration = endTime - gameState.startTime;
+            const formattedDuration = formatScormTime(duration);
+            const maxScore = wordPuzzles.length * 10;
+            pipwerks.SCORM.set("cmi.core.lesson_status", status);
+            pipwerks.SCORM.set("cmi.core.score.raw", gameState.score.toString());
+            pipwerks.SCORM.set("cmi.core.score.min", "0");
+            pipwerks.SCORM.set("cmi.core.score.max", maxScore.toString());
+            pipwerks.SCORM.set("cmi.core.session_time", formattedDuration);
+            pipwerks.SCORM.save();
+        }
+
+        // Pencere kapatılmadan önce SCORM oturumunu sonlandır.
+        window.addEventListener("beforeunload", function () {
+            console.log("SCORM oturumu kapatılıyor...");
+            if (scormInitialized) {
+                pipwerks.SCORM.quit();
+            }
+        });
+
+        // Mobil tarayıcılar için ek güvenlik önlemi.
+        window.addEventListener("unload", function () {
+            if (scormInitialized) {
+                pipwerks.SCORM.quit();
+            }
+        });
+
+        // Sayfa yüklendiğinde SCORM'u otomatik olarak başlat ve tamamlandı olarak işaretle.
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("DOM yüklendi, SCORM başlatılıyor...");
+            initializeSCORM();
+        });
+    </script>
+    <script>
+        // --- OYUN VERİLERİ (GÜNCELLENDİ: Ramadan Eid Theme) ---
+        const wordPuzzles = [
+            { word: "GENEROSITY", clue: "Giving freely without expecting anything in return." },
+            { word: "CHARITY", clue: "Helping others by giving money, food, or time." },
+            { word: "KINDNESS", clue: "Being friendly, warm, and caring to others." },
+            { word: "EMPATHY", clue: "Understanding and feeling what another person feels." },
+            { word: "SHARING", clue: "Giving part of what you have to someone else." },
+            { word: "DONATING", clue: "Giving something, like money or food, to help others." },
+            { word: "CARING", clue: "Showing concern and love for the people around you." }
+        ].map(p => ({ ...p, letters: p.word.replace(/ /g, '').split('') }));
+
+        // --- OYUN DURUMU NESNESİ ---
+        const gameState = {
+            currentPuzzleIndex: 0,
+            score: 0,
+            lives: 3,
+            currentAnswerState: [],
+            isChecking: false,
+            startTime: null,
+            lmsInteractionStarted: false,
+            answeredPuzzleIndices: [], // Track answered puzzles
+        };
+
+        // --- DOM ELEMANLARI ---
+        const statsEl = document.getElementById('stats');
+        const heartsEl = document.getElementById('hearts');
+        const puzzleCounterEl = document.getElementById('puzzle-counter');
+        const clueEl = document.getElementById('clue-text');
+        const lettersContainer = document.getElementById('letters-container');
+        const answerBoxesContainer = document.getElementById('answer-boxes-container');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const musicBtn = document.getElementById('music-btn');
+        let musicStarted = false; // Track if music has been auto-started
+        const bgMusic = document.getElementById('bgMusic');
+        const gameScreen = document.getElementById('game-screen');
+        const winScreen = document.getElementById('win-screen');
+        const finalScoreWinEl = document.getElementById('final-score-win');
+        const playAgainBtnWin = document.getElementById('play-again-btn-win');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreLoseEl = document.getElementById('final-score-lose');
+        const playAgainBtnLose = document.getElementById('play-again-btn-lose');
+
+        // --- SES FONKSİYONU ---
+        function playSound(id) {
+            const sound = document.getElementById(id);
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(error => console.log(`Sound error: ${error.message}`));
+            }
+        }
+
+        function toggleMusic() {
+            if (bgMusic.paused) {
+                bgMusic.play().then(() => {
+                    musicStarted = true;
+                    musicBtn.classList.remove('opacity-80');
+                    musicBtn.classList.add('ring-2', 'ring-white');
+                }).catch(e => console.log("Audio play failed:", e));
+            } else {
+                bgMusic.pause();
+                musicBtn.classList.add('opacity-80');
+                musicBtn.classList.remove('ring-2', 'ring-white');
+            }
+        }
+
+        // --- OYUN MANTIĞI FONKSİYONLARI ---
+        function triggerConfetti() {
+            confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+        }
+
+        function startGame() {
+            gameState.currentPuzzleIndex = 0;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.isChecking = false;
+            gameState.startTime = new Date();
+            gameState.lmsInteractionStarted = false;
+            gameState.answeredPuzzleIndices = [];
+
+            // Init Music Volume
+            if (bgMusic) bgMusic.volume = 0.3;
+
+            winScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+
+            initializePuzzle();
+        }
+
+        function initializePuzzle() {
+            const puzzle = wordPuzzles[gameState.currentPuzzleIndex];
+            gameState.currentAnswerState = puzzle.word.split('').map(char => (char === ' ' || char === '-') ? char : null);
+
+            updateUI();
+            renderAnswerBoxes();
+            setTimeout(renderLetters, 50);
+        }
+
+        function updateUI() {
+            statsEl.textContent = `Score: ${gameState.score}`;
+            puzzleCounterEl.textContent = `Puzzle: ${gameState.answeredPuzzleIndices.length + 1}/${wordPuzzles.length}`;
+            clueEl.textContent = wordPuzzles[gameState.currentPuzzleIndex].clue;
+
+            heartsEl.innerHTML = '';
+            for (let i = 0; i < gameState.lives; i++) heartsEl.innerHTML += '<span class="text-red-500 text-lg sm:text-2xl drop-shadow">❤</span>';
+            for (let i = 0; i < 3 - gameState.lives; i++) heartsEl.innerHTML += '<span class="text-white/30 text-lg sm:text-2xl">❤</span>';
+        }
+
+        function renderAnswerBoxes() {
+            answerBoxesContainer.innerHTML = '';
+            const puzzle = wordPuzzles[gameState.currentPuzzleIndex];
+            puzzle.word.split('').forEach((char, index) => {
+                const box = document.createElement('div');
+                const boxSizeClasses = 'w-10 h-10 sm:w-14 sm:h-14';
+                if (char === ' ' || char === '-') {
+                    box.className = 'w-4 sm:w-6 h-10 sm:h-14 flex items-center justify-center';
+                    if (char === '-') box.innerHTML = '<span class="text-white text-3xl sm:text-4xl font-bold">-</span>';
+                } else {
+                    box.className = `${boxSizeClasses} border-4 border-dashed rounded-lg flex items-center justify-center font-bold text-xl sm:text-3xl cursor-pointer transition-all duration-300 border-white/50 bg-white/20 text-white shadow-sm hover:bg-white/30`;
+                    box.dataset.index = index;
+                    box.addEventListener('click', () => handleBoxClick(index));
+                }
+                answerBoxesContainer.appendChild(box);
+            });
+        }
+
+        function renderLetters() {
+            lettersContainer.innerHTML = '';
+            const puzzle = wordPuzzles[gameState.currentPuzzleIndex];
+            const lettersInAnswer = gameState.currentAnswerState.filter(l => l && l !== ' ' && l !== '-');
+            const availableLetters = [...puzzle.letters];
+
+            lettersInAnswer.forEach(answeredLetter => {
+                const indexToRemove = availableLetters.indexOf(answeredLetter);
+                if (indexToRemove > -1) availableLetters.splice(indexToRemove, 1);
+            });
+
+            const placedRects = [];
+            const containerWidth = lettersContainer.offsetWidth;
+            const containerHeight = lettersContainer.offsetHeight;
+            const letterSize = window.innerWidth < 640 ? 40 : 56;
+            const maxAttempts = 150;
+
+            if (containerWidth === 0) return;
+
+            availableLetters.forEach((letter) => {
+                let newRect;
+                let attempts = 0;
+                let isOverlapping;
+
+                do {
+                    // Slight padding from edges
+                    const padding = 10;
+                    const randomLeft = padding + Math.random() * (containerWidth - letterSize - padding * 2);
+                    const randomTop = padding + Math.random() * (containerHeight - letterSize - padding * 2);
+                    newRect = { left: randomLeft, top: randomTop, right: randomLeft + letterSize, bottom: randomTop + letterSize };
+                    isOverlapping = placedRects.some(rect => !(rect.right < newRect.left || rect.left > newRect.right || rect.bottom < newRect.top || rect.top > newRect.bottom));
+                    attempts++;
+                } while (isOverlapping && attempts < maxAttempts);
+
+                placedRects.push(newRect);
+
+                const letterEl = document.createElement('div');
+                letterEl.className = 'absolute cursor-pointer transition-transform hover:scale-110 animate-bounce active:scale-95';
+                letterEl.style.width = `${letterSize}px`;
+                letterEl.style.height = `${letterSize}px`;
+                letterEl.style.left = `${newRect.left}px`;
+                letterEl.style.top = `${newRect.top}px`;
+                letterEl.style.animationDelay = `${Math.random() * 2}s`;
+                // Randomized rotation for more playful look
+                letterEl.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
+
+                // Candy-styled letter bubbles with varied colors and glossy shine
+                const candyColors = [
+                    { from: 'from-pink-400', to: 'to-rose-500', hover: 'hover:from-pink-300 hover:to-rose-400', border: 'border-pink-300' },
+                    { from: 'from-emerald-400', to: 'to-green-600', hover: 'hover:from-emerald-300 hover:to-green-500', border: 'border-emerald-300' },
+                    { from: 'from-purple-400', to: 'to-violet-600', hover: 'hover:from-purple-300 hover:to-violet-500', border: 'border-purple-300' },
+                    { from: 'from-orange-400', to: 'to-red-500', hover: 'hover:from-orange-300 hover:to-red-400', border: 'border-orange-300' },
+                    { from: 'from-cyan-400', to: 'to-blue-500', hover: 'hover:from-cyan-300 hover:to-blue-400', border: 'border-cyan-300' },
+                    { from: 'from-yellow-300', to: 'to-amber-500', hover: 'hover:from-yellow-200 hover:to-amber-400', border: 'border-yellow-200' },
+                    { from: 'from-red-400', to: 'to-pink-600', hover: 'hover:from-red-300 hover:to-pink-500', border: 'border-red-300' },
+                ];
+                const candy = candyColors[Math.floor(Math.random() * candyColors.length)];
+                letterEl.innerHTML = `
+                <div class="w-full h-full rounded-2xl bg-gradient-to-br ${candy.from} ${candy.to} ${candy.hover} border-2 ${candy.border} shadow-lg flex items-center justify-center relative overflow-hidden" style="box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 -3px 6px rgba(0,0,0,0.15), inset 0 3px 6px rgba(255,255,255,0.4);">
+                    <div class="absolute top-1 left-1.5 w-3 h-2 bg-white/50 rounded-full blur-[1px]"></div>
+                    <span class="text-white font-bold text-lg sm:text-2xl select-none drop-shadow-md">${letter}</span>
+                </div>`;
+
+                letterEl.addEventListener('click', () => handleLetterClick(letter, letterEl));
+                lettersContainer.appendChild(letterEl);
+            });
+        }
+
+        function handleLetterClick(letter, element) {
+            // SCORM artık sayfa yüklendiğinde otomatik başlatılıyor
+
+            // Auto-start music on first interaction
+            if (!musicStarted && bgMusic) {
+                bgMusic.play().then(() => {
+                    musicStarted = true;
+                    musicBtn.classList.remove('opacity-80');
+                    musicBtn.classList.add('ring-2', 'ring-white');
+                }).catch(e => console.log("Auto music play failed:", e));
+            }
+
+            if (gameState.isChecking) return;
+            playSound('clickSound');
+            const nextEmptyIndex = gameState.currentAnswerState.findIndex(l => l === null);
+            if (nextEmptyIndex === -1) return;
+
+            // Simple animation before removing
+            element.style.transform = 'scale(0)';
+            setTimeout(() => element.remove(), 100);
+
+            gameState.currentAnswerState[nextEmptyIndex] = letter;
+
+            updateAnswerBox(nextEmptyIndex, letter);
+            checkCompletion();
+        }
+
+        function handleBoxClick(index) {
+            if (gameState.isChecking) return;
+            const letter = gameState.currentAnswerState[index];
+            if (!letter || letter === ' ' || letter === '-') return;
+
+            playSound('clickSound');
+            gameState.currentAnswerState[index] = null;
+            renderLetters();
+            updateAnswerBox(index, null);
+        }
+
+        function updateAnswerBox(index, letter) {
+            const box = answerBoxesContainer.querySelector(`[data-index="${index}"]`);
+            if (!box) return;
+
+            const baseClasses = 'border-4 rounded-lg flex items-center justify-center font-bold text-xl sm:text-3xl cursor-pointer transition-all duration-300 shadow-sm';
+            const boxSizeClasses = 'w-10 h-10 sm:w-14 sm:h-14';
+
+            if (letter === null) {
+                box.innerHTML = '';
+                box.className = `${boxSizeClasses} ${baseClasses} border-dashed border-white/50 bg-white/20 text-white`;
+            } else {
+                box.innerHTML = `<span class="animate-scale-in drop-shadow-md">${letter}</span>`;
+                const correctLetter = wordPuzzles[gameState.currentPuzzleIndex].word[index];
+                if (letter === correctLetter) {
+                    box.className = `${boxSizeClasses} ${baseClasses} border-solid border-white bg-green-500 text-white`;
+                } else {
+                    box.className = `${boxSizeClasses} ${baseClasses} border-solid border-white bg-red-500 text-white`;
+                }
+            }
+        }
+
+        function checkCompletion() {
+            if (gameState.currentAnswerState.every(l => l !== null)) {
+                gameState.isChecking = true;
+                const userAnswer = gameState.currentAnswerState.join('');
+                const correctAnswer = wordPuzzles[gameState.currentPuzzleIndex].word;
+
+                if (userAnswer === correctAnswer) {
+                    handleCorrectAnswer();
+                } else {
+                    handleWrongAnswer();
+                }
+            }
+        }
+
+        function handleCorrectAnswer() {
+            playSound('correctSound');
+            triggerConfetti();
+            gameState.score += 10;
+            gameState.answeredPuzzleIndices.push(gameState.currentPuzzleIndex);
+
+            // Highlight all boxes green
+            const boxes = answerBoxesContainer.children;
+            for (let box of boxes) {
+                if (box.dataset.index !== undefined) {
+                    box.classList.remove('bg-red-500', 'bg-green-500');
+                    box.classList.add('bg-emerald-400', 'scale-110');
+                }
+            }
+
+            setTimeout(() => {
+                if (gameState.answeredPuzzleIndices.length === wordPuzzles.length) {
+                    triggerWin();
+                } else {
+                    skipToNewPuzzle(true); // true = auto advance
+                }
+            }, 1500);
+        }
+
+        function handleWrongAnswer() {
+            playSound('wrongSound');
+            gameState.lives--;
+            answerBoxesContainer.classList.add('animate-shake');
+
+            setTimeout(() => {
+                answerBoxesContainer.classList.remove('animate-shake');
+                if (gameState.lives <= 0) {
+                    triggerGameOver();
+                } else {
+                    updateUI();
+                    gameState.currentAnswerState = wordPuzzles[gameState.currentPuzzleIndex].word.split('').map(char => (char === ' ' || char === '-') ? char : null);
+                    renderAnswerBoxes();
+                    renderLetters();
+                    gameState.isChecking = false;
+                }
+            }, 1000);
+        }
+
+        function triggerWin() {
+            playSound('winSound');
+            gameScreen.classList.add('hidden');
+            winScreen.classList.remove('hidden');
+            winScreen.classList.add('flex');
+            finalScoreWinEl.textContent = gameState.score;
+            sendFinalScormUpdate("passed");
+        }
+
+        function triggerGameOver() {
+            playSound('gameOverSound');
+            gameScreen.classList.add('hidden');
+            gameOverScreen.classList.remove('hidden');
+            gameOverScreen.classList.add('flex');
+            finalScoreLoseEl.textContent = gameState.score;
+            sendFinalScormUpdate("failed");
+        }
+
+        function skipToNewPuzzle(isAutoAdvance = false) {
+            const allIndices = Array.from(Array(wordPuzzles.length).keys());
+            const unansweredIndices = allIndices.filter(i => !gameState.answeredPuzzleIndices.includes(i) && i !== gameState.currentPuzzleIndex);
+
+            if (unansweredIndices.length > 0) {
+                // If auto-advancing, we don't reset isChecking until we init logic
+                gameState.currentPuzzleIndex = unansweredIndices[Math.floor(Math.random() * unansweredIndices.length)];
+            } else {
+                // Fallback if all answered but game didn't end for some reason
+                const availableIndices = allIndices.filter(i => i !== gameState.currentPuzzleIndex);
+                if (availableIndices.length > 0) {
+                    gameState.currentPuzzleIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+                }
+            }
+
+            if (!isAutoAdvance) {
+                // Penalize skip slightly or just reset checking if manual
+            }
+
+            gameState.isChecking = false;
+            initializePuzzle();
+        }
+
+
+        // --- OLAY DİNLEYİCİLERİ ---
+        shuffleBtn.addEventListener('click', () => {
+            if (gameState.isChecking) return;
+            playSound('clickSound');
+            // Add spin animation to button
+            const icon = shuffleBtn.querySelector('svg');
+            icon.classList.add('animate-spin');
+            setTimeout(() => icon.classList.remove('animate-spin'), 500);
+            renderLetters();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (gameState.isChecking) return;
+            playSound('clickSound');
+            skipToNewPuzzle();
+        });
+
+
+
+        musicBtn.addEventListener('click', () => {
+            playSound('clickSound');
+            toggleMusic();
+        });
+
+        const themeBtn = document.getElementById('theme-btn');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeLabel = document.getElementById('theme-label');
+        let isBrightTheme = true;
+
+        themeBtn.addEventListener('click', () => {
+            playSound('clickSound');
+            isBrightTheme = !isBrightTheme;
+            document.body.classList.toggle('bright-theme', isBrightTheme);
+            themeIcon.textContent = isBrightTheme ? '🌙' : '☀️';
+            themeLabel.textContent = isBrightTheme ? 'Dark' : 'Bright';
+        });
+
+        playAgainBtnWin.addEventListener('click', () => {
+            playSound('clickSound');
+            startGame();
+        });
+        playAgainBtnLose.addEventListener('click', () => {
+            playSound('clickSound');
+            startGame();
+        });
+
+        // --- OYUNU BAŞLAT ---
+        document.addEventListener('DOMContentLoaded', startGame);
+
+        window.addEventListener('resize', () => {
+            if (!gameScreen.classList.contains('hidden')) {
+                renderLetters();
+            }
+        });
+    </script>
+</body>
+
+</html>
